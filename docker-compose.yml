@@ -1,19 +1,22 @@
-version: '4'
-
 services:
-  postgres:
-    container_name: atlas_postgres
-    image: postgres:15-alpine
+  # Postgres Database
+  postgres-db:
+    image: postgres:alpine
+    restart: always
+    ports:
+      - '5432:5432'
     environment:
+      POSTGRES_DB: atlas
       POSTGRES_USER: umut
       POSTGRES_PASSWORD: umut
-      PGDATA: /var/lib/postgresql/data
     volumes:
-      - atlas_postgres:/var/lib/postgresql/data
-      - ./docker:/docker-entrypoint-initdb.d/
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "umut"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:latest
@@ -24,28 +27,7 @@ services:
     volumes:
       - atlas_redis:/data
 
-  redis-insight:
-    image: redis/redisinsight:latest
-    container_name: atlas_redis-insight
-    restart: always
-    ports:
-      - "5540:5540"
-
-#  auth-service:
-#    container_name: atlas_auth
-#    build: ./services/auth
-#    ports:
-#      - "8090:8090"
-#    networks:
-#      - atlas_network
-#    depends_on:
-##      - config-server
-##      - discovery-server
-#      - postgres
-
+# Volumes
 volumes:
-  atlas_postgres: {}
-  atlas_redis: {}
-
-networks:
-  atlas_network: {}
+  postgres-data:
+    driver: local
