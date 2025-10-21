@@ -1,8 +1,9 @@
 services:
   # Postgres Database
-  postgres-db:
+  postgres:
+    container_name: atlas_postgres
     image: postgres:alpine
-    restart: always
+    restart: unless-stopped
     ports:
       - '5432:5432'
     environment:
@@ -10,13 +11,15 @@ services:
       POSTGRES_USER: umut
       POSTGRES_PASSWORD: umut
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - atlas_postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "umut"]
+      test: ["CMD-SHELL", "pg_isready -U umut -d atlas"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 10s
+    networks:
+      - atlas_network
 
   redis:
     image: redis:latest
@@ -26,8 +29,48 @@ services:
       - "6379:6379"
     volumes:
       - atlas_redis:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - atlas_network
+
+  auth-service:
+    container_name: atlas_auth
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/atlas
+      SPRING_DATASOURCE_USERNAME: umut
+      SPRING_DATASOURCE_PASSWORD: umut
+    ports:
+      - "8090:8090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+      timeout: 5s
+    networks:
+      - atlas_network
+
+networks:
+  atlas_network:
+    driver: bridge
 
 # Volumes
 volumes:
-  postgres-data:
+  atlas_postgres:
+    driver: local
+  atlas_redis:
     driver: local
