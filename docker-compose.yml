@@ -59,31 +59,53 @@ services:
     networks:
       - atlas_network
 
-#  auth-service:
-#    container_name: atlas_auth
-#    build:
-#      context: ./services/auth
-#      dockerfile: Dockerfile
-#    restart: unless-stopped
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/atlas
-#      SPRING_DATASOURCE_USERNAME: umut
-#      SPRING_DATASOURCE_PASSWORD: umut
-#    ports:
-#      - "8090:8090"
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#      redis:
-#        condition: service_healthy
-#    healthcheck:
-#      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
-#      interval: 10s
-#      retries: 10
-#      start_period: 30s
-#      timeout: 5s
-#    networks:
-#      - atlas_network
+  auth-service:
+    container_name: atlas_auth
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/atlas
+      SPRING_DATASOURCE_USERNAME: umut
+      SPRING_DATASOURCE_PASSWORD: umut
+    ports:
+      - "8090:8090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+      timeout: 5s
+    networks:
+      - atlas_network
+
+  catalog-service:
+    container_name: atlas_catalog
+    build:
+      context: ./services/catalog
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://umut:umut@mongodb:27017/atlas?authSource=admin
+    ports:
+      - "8091:8091"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8091/actuator/health" ]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+      timeout: 5s
+    networks:
+      - atlas_network
 
 networks:
   atlas_network:
