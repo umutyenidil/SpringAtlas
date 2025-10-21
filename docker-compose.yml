@@ -21,6 +21,27 @@ services:
     networks:
       - atlas_network
 
+  mongodb:
+    container_name: atlas_mongodb
+    image: mongo:latest
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: atlas
+      MONGO_INITDB_ROOT_USERNAME: umut
+      MONGO_INITDB_ROOT_PASSWORD: umut
+    volumes:
+      - atlas_mongo:/data/db
+    healthcheck:
+      test: [ "CMD-SHELL", "mongosh --username umut --password umut --eval 'db.adminCommand(\"ping\")' || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - atlas_network
+
   redis:
     image: redis:latest
     container_name: atlas_redis
@@ -38,31 +59,31 @@ services:
     networks:
       - atlas_network
 
-  auth-service:
-    container_name: atlas_auth
-    build:
-      context: ./services/auth
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/atlas
-      SPRING_DATASOURCE_USERNAME: umut
-      SPRING_DATASOURCE_PASSWORD: umut
-    ports:
-      - "8090:8090"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
-      interval: 10s
-      retries: 10
-      start_period: 30s
-      timeout: 5s
-    networks:
-      - atlas_network
+#  auth-service:
+#    container_name: atlas_auth
+#    build:
+#      context: ./services/auth
+#      dockerfile: Dockerfile
+#    restart: unless-stopped
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/atlas
+#      SPRING_DATASOURCE_USERNAME: umut
+#      SPRING_DATASOURCE_PASSWORD: umut
+#    ports:
+#      - "8090:8090"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#    healthcheck:
+#      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
+#      interval: 10s
+#      retries: 10
+#      start_period: 30s
+#      timeout: 5s
+#    networks:
+#      - atlas_network
 
 networks:
   atlas_network:
@@ -71,6 +92,8 @@ networks:
 # Volumes
 volumes:
   atlas_postgres:
+    driver: local
+  atlas_mongo:
     driver: local
   atlas_redis:
     driver: local
