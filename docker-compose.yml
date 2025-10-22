@@ -107,6 +107,23 @@ services:
     networks:
       - atlas_network
 
+  payment-service:
+    container_name: atlas_payment
+    build:
+      context: ./services/payment
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8092:8092"
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8092/actuator/health" ]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+      timeout: 5s
+    networks:
+      - atlas_network
+
 networks:
   atlas_network:
     driver: bridge
