@@ -76,6 +76,28 @@ services:
     networks:
       - atlas_network
 
+  eureka-service:
+    container_name: atlas_eureka
+    build:
+      context: ./services/eureka
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+    depends_on:
+      config-service:
+        condition: service_healthy
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+      timeout: 5s
+    networks:
+      - atlas_network
+
   auth-service:
     container_name: atlas_auth
     build:
@@ -91,7 +113,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      config-service:
+      eureka-service:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
@@ -115,7 +137,7 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
-      config-service:
+      eureka-service:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8091/actuator/health" ]
@@ -137,7 +159,7 @@ services:
     ports:
       - "8092:8092"
     depends_on:
-      config-service:
+      eureka-service:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8092/actuator/health" ]
