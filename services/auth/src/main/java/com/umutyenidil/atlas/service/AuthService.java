@@ -1,9 +1,9 @@
 package com.umutyenidil.atlas.service;
 
 import com.umutyenidil.atlas.dto.*;
-import com.umutyenidil.atlas.dto.request.AuthRefreshRequest;
 import com.umutyenidil.atlas.dto.request.LoginRequest;
 import com.umutyenidil.atlas.dto.response.AuthResponse;
+import com.umutyenidil.atlas.dto.response.TokenResponse;
 import com.umutyenidil.atlas.entity.Auth;
 import com.umutyenidil.atlas.exception.SingleValidationException;
 import com.umutyenidil.atlas.exception.UnauthorizedException;
@@ -13,12 +13,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.HashMap;
 
 @Service
@@ -30,11 +30,10 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
-    private final AuthMapper authMapper;
     private final RedisBlacklistService redisBlacklistService;
+    private final UserDetailsService userDetailsService;
 
-    public AuthResponse login(LoginRequest request) {
+    public TokenResponse login(LoginRequest request) {
         var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.email(),
@@ -48,13 +47,13 @@ public class AuthService {
         var accessToken = jwtService.generateAccessToken(claims, auth);
         var refreshToken = jwtService.generateRefreshToken(claims, auth);
 
-        return AuthResponse.builder()
+        return TokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
     }
 
-    public AuthResponse register(RegisterRequest request) {
+    public TokenResponse register(RegisterRequest request) {
         if (authRepository.findByEmail(request.email()).isPresent())
             throw new SingleValidationException("email", "error.auth.emailexists");
 
@@ -70,13 +69,13 @@ public class AuthService {
         var accessToken = jwtService.generateAccessToken(claims, auth);
         var refreshToken = jwtService.generateRefreshToken(claims, auth);
 
-        return AuthResponse.builder()
+        return TokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
     }
 
-    public AuthResponse refreshToken(String refreshToken) {
+    public TokenResponse refreshToken(String refreshToken) {
         var email = jwtService.extractEmail(refreshToken);
         var auth = authRepository.findByEmail(email);
 
@@ -84,7 +83,7 @@ public class AuthService {
 
         var claims = new HashMap<String, Object>();
 
-        return AuthResponse.builder()
+        return TokenResponse.builder()
                 .accessToken(jwtService.generateAccessToken(claims, auth.get()))
                 .refreshToken(jwtService.generateRefreshToken(claims, auth.get()))
                 .build();
@@ -99,5 +98,30 @@ public class AuthService {
         var expiration = jwtService.extractExpiration(token);
 
         redisBlacklistService.add(token, expiration.toInstant());
+    }
+
+    public AuthResponse validate(String authorizationHeader) {
+
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer "))
+            throw new UnauthorizedException();
+
+        String jwt = authorizationHeader.substring(7);
+
+        if(redisBlacklistService.contains(jwt)) throw new AuthorizationDeniedException("");
+
+        String email = jwtService.extractEmail(jwt);
+
+        if (email == null) throw new AuthorizationDeniedException("");
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+        if (!jwtService.isTokenValid(jwt, userDetails)) throw new AuthorizationDeniedException("");
+
+        var auth = authRepository.findByEmail(email)
+                .orElseThrow(UnauthorizedException::new);
+
+        return AuthResponse.builder()
+                .userId(auth.getId().toString())
+                .build();
     }
 }
