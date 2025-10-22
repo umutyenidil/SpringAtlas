@@ -59,116 +59,116 @@ services:
     networks:
       - atlas_network
 
-  config-service:
-    container_name: atlas_config
-    build:
-      context: ./services/config
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "8081:8081"
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8081/actuator/health" ]
-      interval: 10s
-      retries: 10
-      start_period: 30s
-      timeout: 5s
-    networks:
-      - atlas_network
-
-  eureka-service:
-    container_name: atlas_eureka
-    build:
-      context: ./services/eureka
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
-    depends_on:
-      config-service:
-        condition: service_healthy
-    ports:
-      - "8761:8761"
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health" ]
-      interval: 10s
-      retries: 10
-      start_period: 30s
-      timeout: 5s
-    networks:
-      - atlas_network
-
-  auth-service:
-    container_name: atlas_auth
-    build:
-      context: ./services/auth
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
-    ports:
-      - "8090:8090"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      eureka-service:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
-      interval: 10s
-      retries: 10
-      start_period: 30s
-      timeout: 5s
-    networks:
-      - atlas_network
-
-  catalog-service:
-    container_name: atlas_catalog
-    build:
-      context: ./services/catalog
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
-    ports:
-      - "8091:8091"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-      eureka-service:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8091/actuator/health" ]
-      interval: 10s
-      retries: 10
-      start_period: 30s
-      timeout: 5s
-    networks:
-      - atlas_network
-
-  payment-service:
-    container_name: atlas_payment
-    build:
-      context: ./services/payment
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
-    ports:
-      - "8092:8092"
-    depends_on:
-      eureka-service:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8092/actuator/health" ]
-      interval: 10s
-      retries: 10
-      start_period: 30s
-      timeout: 5s
-    networks:
-      - atlas_network
+#  config-service:
+#    container_name: atlas_config
+#    build:
+#      context: ./services/config
+#      dockerfile: Dockerfile
+#    restart: unless-stopped
+#    ports:
+#      - "8081:8081"
+#    healthcheck:
+#      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8081/actuator/health" ]
+#      interval: 10s
+#      retries: 10
+#      start_period: 30s
+#      timeout: 5s
+#    networks:
+#      - atlas_network
+#
+#  eureka-service:
+#    container_name: atlas_eureka
+#    build:
+#      context: ./services/eureka
+#      dockerfile: Dockerfile
+#    restart: unless-stopped
+#    environment:
+#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+#    depends_on:
+#      config-service:
+#        condition: service_healthy
+#    ports:
+#      - "8761:8761"
+#    healthcheck:
+#      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health" ]
+#      interval: 10s
+#      retries: 10
+#      start_period: 30s
+#      timeout: 5s
+#    networks:
+#      - atlas_network
+#
+#  auth-service:
+#    container_name: atlas_auth
+#    build:
+#      context: ./services/auth
+#      dockerfile: Dockerfile
+#    restart: unless-stopped
+#    environment:
+#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+#    ports:
+#      - "8090:8090"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      eureka-service:
+#        condition: service_healthy
+#    healthcheck:
+#      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
+#      interval: 10s
+#      retries: 10
+#      start_period: 30s
+#      timeout: 5s
+#    networks:
+#      - atlas_network
+#
+#  catalog-service:
+#    container_name: atlas_catalog
+#    build:
+#      context: ./services/catalog
+#      dockerfile: Dockerfile
+#    restart: unless-stopped
+#    environment:
+#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+#    ports:
+#      - "8091:8091"
+#    depends_on:
+#      mongodb:
+#        condition: service_healthy
+#      eureka-service:
+#        condition: service_healthy
+#    healthcheck:
+#      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8091/actuator/health" ]
+#      interval: 10s
+#      retries: 10
+#      start_period: 30s
+#      timeout: 5s
+#    networks:
+#      - atlas_network
+#
+#  payment-service:
+#    container_name: atlas_payment
+#    build:
+#      context: ./services/payment
+#      dockerfile: Dockerfile
+#    restart: unless-stopped
+#    environment:
+#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+#    ports:
+#      - "8092:8092"
+#    depends_on:
+#      eureka-service:
+#        condition: service_healthy
+#    healthcheck:
+#      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8092/actuator/health" ]
+#      interval: 10s
+#      retries: 10
+#      start_period: 30s
+#      timeout: 5s
+#    networks:
+#      - atlas_network
 
 networks:
   atlas_network:
