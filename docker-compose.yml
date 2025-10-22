@@ -59,6 +59,23 @@ services:
     networks:
       - atlas_network
 
+  config-service:
+    container_name: atlas_config
+    build:
+      context: ./services/config
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8081/actuator/health" ]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+      timeout: 5s
+    networks:
+      - atlas_network
+
   auth-service:
     container_name: atlas_auth
     build:
@@ -66,15 +83,15 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/atlas
-      SPRING_DATASOURCE_USERNAME: umut
-      SPRING_DATASOURCE_PASSWORD: umut
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
     ports:
       - "8090:8090"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      config-service:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
@@ -92,11 +109,13 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://umut:umut@mongodb:27017/atlas?authSource=admin
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
     ports:
       - "8091:8091"
     depends_on:
       mongodb:
+        condition: service_healthy
+      config-service:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8091/actuator/health" ]
@@ -113,8 +132,13 @@ services:
       context: ./services/payment
       dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
     ports:
       - "8092:8092"
+    depends_on:
+      config-service:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8092/actuator/health" ]
       interval: 10s
