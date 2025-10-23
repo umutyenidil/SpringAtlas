@@ -15,6 +15,8 @@ FROM amazoncorretto:21-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache curl
+
 COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8091

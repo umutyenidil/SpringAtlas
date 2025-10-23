@@ -2,7 +2,7 @@ services:
   # Postgres Database
   postgres:
     container_name: atlas_postgres
-    image: postgres:alpine
+    image: postgres:15-alpine
     restart: unless-stopped
     ports:
       - '5432:5432'
@@ -13,7 +13,7 @@ services:
     volumes:
       - atlas_postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U umut -d atlas"]
+      test: [ "CMD-SHELL", "pg_isready -U umut -d atlas" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,7 +34,7 @@ services:
     volumes:
       - atlas_mongo:/data/db
     healthcheck:
-      test: [ "CMD-SHELL", "mongosh --username umut --password umut --eval 'db.adminCommand(\"ping\")' || exit 1" ]
+      test: [ "CMD-SHELL", "mongosh --username umut --password umut --eval 'db.adminCommand(\"ping\")'" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -68,7 +68,7 @@ services:
     ports:
       - "8081:8081"
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8081/actuator/health" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081/actuator/health" ]
       interval: 10s
       retries: 10
       start_period: 30s
@@ -83,14 +83,14 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
     depends_on:
       config-service:
         condition: service_healthy
     ports:
       - "8761:8761"
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8761/actuator/health" ]
       interval: 10s
       retries: 10
       start_period: 30s
@@ -105,7 +105,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
     ports:
       - "8090:8090"
     depends_on:
@@ -116,7 +116,7 @@ services:
       eureka-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/actuator/health" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8090/actuator/health" ]
       interval: 10s
       retries: 10
       start_period: 30s
@@ -131,7 +131,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
     ports:
       - "8091:8091"
     depends_on:
@@ -140,7 +140,7 @@ services:
       eureka-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8091/actuator/health" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8091/actuator/health" ]
       interval: 10s
       retries: 10
       start_period: 30s
@@ -155,14 +155,14 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
     ports:
       - "8092:8092"
     depends_on:
       eureka-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8092/actuator/health" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8092/actuator/health" ]
       interval: 10s
       retries: 10
       start_period: 30s
@@ -177,7 +177,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8081
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
     ports:
       - "80:80"
     depends_on:
@@ -188,7 +188,7 @@ services:
       payment-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost/actuator/health" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost/actuator/health" ]
       interval: 10s
       retries: 10
       start_period: 30s

@@ -38,7 +38,7 @@ public class JwtFilter extends OncePerRequestFilter {
     ) {
         try {
             if (request.getServletPath().contains("/api/v1/auth/login") ||
-                    request.getServletPath().contains("/api/v1/auth/register")) {
+                    request.getServletPath().contains("/api/v1/auth/register") || request.getServletPath().contains("/actuator")) {
                 filterChain.doFilter(request, response);
                 return;
             }
