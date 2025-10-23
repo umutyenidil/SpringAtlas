@@ -59,6 +59,19 @@ services:
     networks:
       - atlas_network
 
+  zipkin:
+    container_name: atlas_zipkin
+    image: openzipkin/zipkin:3.5
+    ports:
+      - "9411:9411"
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:9411/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - atlas_network
+
   config-service:
     container_name: atlas_config
     build:
