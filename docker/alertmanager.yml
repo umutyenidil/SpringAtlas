@@ -1,0 +1,16 @@
+global:
+  smtp_smarthost: 'maildev:1025'
+  smtp_from: 'alert@atlas.com'
+  smtp_require_tls: false
+  resolve_timeout: 5m
+
+route:
+  receiver: 'maildev'
+  group_wait: 1s
+  group_interval: 5s
+  repeat_interval: 10s
+
+receivers:
+  - name: 'maildev'
+    email_configs:
+      - to: 'test@example.com'
