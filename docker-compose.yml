@@ -1,6 +1,8 @@
 services:
   maildev:
     image: maildev/maildev
+    mem_limit: 64m
+    cpus: 0.1
     container_name: atlas_maildev
     restart: unless-stopped
     ports:
@@ -12,6 +14,8 @@ services:
   postgres:
     container_name: atlas_postgres
     image: postgres:15-alpine
+    mem_limit: 512m
+    cpus: 0.4
     restart: unless-stopped
     ports:
       - '5432:5432'
@@ -33,6 +37,8 @@ services:
   mongodb:
     container_name: atlas_mongodb
     image: mongo:latest
+    mem_limit: 512m
+    cpus: 0.4
     restart: unless-stopped
     ports:
       - "27017:27017"
@@ -53,6 +59,8 @@ services:
 
   redis:
     image: redis:latest
+    mem_limit: 128m
+    cpus: 0.2
     container_name: atlas_redis
     restart: always
     ports:
@@ -71,6 +79,8 @@ services:
   zipkin:
     container_name: atlas_zipkin
     image: openzipkin/zipkin:3.5
+    mem_limit: 128m
+    cpus: 0.2
     ports:
       - "9411:9411"
     healthcheck:
@@ -83,6 +93,8 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
+    mem_limit: 256m
+    cpus: 0.3
     container_name: atlas_prometheus
     ports:
       - "9090:9090"
@@ -98,6 +110,8 @@ services:
 
   grafana:
     image: grafana/grafana:latest
+    mem_limit: 128m
+    cpus: 0.2
     container_name: atlas_grafana
     ports:
       - "3000:3000"
@@ -107,6 +121,8 @@ services:
 
   alertmanager:
     image: prom/alertmanager:latest
+    mem_limit: 64m
+    cpus: 0.1
     container_name: atlas_alertmanager
     restart: unless-stopped
     volumes:
@@ -123,6 +139,8 @@ services:
     build:
       context: ./services/config
       dockerfile: Dockerfile
+    mem_limit: 256m
+    cpus: 0.4
     restart: unless-stopped
     ports:
       - "8081:8081"
@@ -140,6 +158,8 @@ services:
     build:
       context: ./services/eureka
       dockerfile: Dockerfile
+    mem_limit: 256m
+    cpus: 0.4
     restart: unless-stopped
     environment:
       SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
@@ -162,6 +182,8 @@ services:
     build:
       context: ./services/auth
       dockerfile: Dockerfile
+    mem_limit: 384m
+    cpus: 0.5
     restart: unless-stopped
     environment:
       SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
@@ -188,6 +210,8 @@ services:
     build:
       context: ./services/catalog
       dockerfile: Dockerfile
+    mem_limit: 384m
+    cpus: 0.5
     restart: unless-stopped
     environment:
       SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
@@ -212,6 +236,8 @@ services:
     build:
       context: ./services/payment
       dockerfile: Dockerfile
+    mem_limit: 256m
+    cpus: 0.4
     restart: unless-stopped
     environment:
       SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
@@ -234,6 +260,8 @@ services:
     build:
       context: ./services/gateway
       dockerfile: Dockerfile
+    mem_limit: 256m
+    cpus: 0.5
     restart: unless-stopped
     environment:
       SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8081"
